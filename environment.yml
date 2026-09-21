@@ -1,0 +1,8 @@
+# Bootstrap only. Run scripts/create_env.sh for the locked pip dependencies.
+name: qwen3-omni
+channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - nodefaults
+dependencies:
+  - python=3.12.14
+  - pip=26.2.1

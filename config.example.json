@@ -1,0 +1,17 @@
+{
+  "env_name": "qwen3-omni",
+  "env_prefix": "",
+  "model_path": "models/Qwen3-Omni-30B-A3B-Instruct",
+  "gpus": "0,1,2,3",
+  "tensor_parallel_size": 4,
+  "host": "127.0.0.1",
+  "port": 8001,
+  "model_name": "Qwen3Omni-Instruct",
+  "max_model_len": 32768,
+  "max_num_seqs": 4,
+  "max_audio": 4,
+  "gpu_memory_utilization": 0.9,
+  "runtime_dir": ".runtime",
+  "tmux_session": "qwen3-omni",
+  "startup_timeout": 900
+}

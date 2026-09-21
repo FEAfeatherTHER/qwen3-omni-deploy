@@ -1,0 +1,8 @@
+.runtime/
+config.local.json
+models/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.superpowers/
+*.egg-info/

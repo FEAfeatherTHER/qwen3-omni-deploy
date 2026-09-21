@@ -1,21 +1,30 @@
-# Qwen3-Omni 本地部署
+# Qwen3-Omni 服务器部署与 HTTP 调用
 
 使用四张 NVIDIA GPU 部署 `Qwen/Qwen3-Omni-30B-A3B-Instruct`，提供文字与音频理解的 HTTP 服务。仅运行 Thinker、返回文字，跳过 Talker 和语音生成权重。客户端可通过 SSH 通道从另一台服务器调用，无需共享音频目录。
 
+本仓库的使用方式：**另一台服务器运行模型，本机保存 Git 仓库并作为 HTTP 调用端**。请求路径为：本机客户端 → SSH 通道 → 目标服务器的模型服务 → 返回文字。本机调用时不占用 GPU，也不需要加载权重。
+
 服务采用 [Qwen 官方的 vLLM 部署方式](https://github.com/QwenLM/Qwen3-Omni#vllm-usage)，模型来自 [Hugging Face 官方库](https://huggingface.co/Qwen/Qwen3-Omni-30B-A3B-Instruct)。仓库只保存部署代码和文档，模型与 conda 环境单独管理。
 
-## 本机使用
+## 本机作为调用端
 
-本机的 `config.local.json` 已指向已有 `qwen3-omni` 环境及完整权重目录，使用 GPU `0,1,3,4`。该文件不会进入 Git。通用默认值仍为 GPU `0,1,2,3`。
+目标服务器按下文部署完成后，在本机建立通道（替换实际 SSH 地址）：
 
 ```bash
 cd /mnt/workspace/jingchong/code/qwen3-omni-deploy
-python3 deploy.py status
-python3 client.py --prompt '请用一句话介绍你自己。'
-python3 client.py --prompt '请转写这段语音。' --audio /path/to/recording.wav
+bash scripts/tunnel.sh user@gpu-server
 ```
 
-服务地址：`http://127.0.0.1:8001/v1`；模型名称：`Qwen3Omni-Instruct`。客户端只需 Python 3.10 或更新版本，不需激活模型环境。
+另开本机终端调用：
+
+```bash
+python3 client.py --base-url http://127.0.0.1:18001/v1 \
+  --prompt '请转写这段语音。' --audio /path/to/recording.wav
+```
+
+目标服务器的服务地址是 `127.0.0.1:8001`，通过通道映射为本机 `127.0.0.1:18001`。模型名称为 `Qwen3Omni-Instruct`，客户端只需 Python 3.10 或更新版本。
+
+本机四卡部署验收已完成，服务已停止。保留的 `config.local.json` 指向本机验证环境，已排除在 Git 之外；迁移时在目标服务器新建自己的配置。通用默认 GPU 为 `0,1,2,3`。
 
 ## 新服务器部署
 
@@ -63,6 +72,8 @@ python3 client.py --prompt '请转写这段语音。' --audio /path/to/recording
 
 ## 服务管理
 
+以下命令在运行模型的目标服务器上执行。
+
 ```bash
 python3 deploy.py config           # 查看有效配置
 python3 deploy.py doctor           # 启动前检查；需要空闲端口和 GPU
@@ -95,7 +106,7 @@ python3 deploy.py --config /path/to/another.json config
 
 当前 vLLM 完全关闭图片组件时会发生启动错误，因此内部保留 `image=1, video=0` 的兼容配置。[相关问题](https://github.com/vllm-project/vllm/issues/49384)。本仓库的客户端和验收仅涵盖文字、音频；这不意味着底层 HTTP 接口会拒绝所有图片请求。此设置不会启用 Talker。权重文件保留官方完整格式，由 vLLM 在加载时跳过语音生成部分。
 
-## 从另一台服务器调用
+## 在本机通过 HTTP 调用
 
 在调用端复制 `client.py` 和 `scripts/tunnel.sh`，然后建立 SSH 通道：
 

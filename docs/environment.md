@@ -9,11 +9,15 @@
 ```bash
 # 在 tmux 内安装，断开 SSH 不影响下载。
 tmux new -s qwen-env
-bash scripts/create_env.sh --prefix "$PWD/.runtime/conda-env"
+bash scripts/create_env.sh
 # 完成后按 Ctrl-b，再按 d 退出 tmux。
 ```
 
-脚本仅创建指定的新目录，拒绝使用已有目录，不改动现有环境、shell 配置、全局 conda 或 pip 配置。安装中断后，不要把半成品环境当作已验证环境；保留日志，并指定另一个新目录重新执行。pip 下载缓存会继续复用。
+默认通过 `conda create --name qwen3-omni` 创建命名环境，位置由 conda 的 `envs_dirs` 配置决定，通常为 Miniconda 安装目录下的 `envs/qwen3-omni`。安装完成后使用 `conda activate qwen3-omni`，通过 `conda env list` 查看实际位置。
+
+脚本拒绝覆盖已有同名环境或目录，不修改已有环境、shell 配置、全局 conda 或 pip 配置。本机已有可用的 `qwen3-omni`，无需再次安装。需要其他名称时使用 `bash scripts/create_env.sh --name qwen-other`，并在服务配置中设置 `"env_name": "qwen-other"`。只有明确需要自定义位置时才使用 `--prefix /your/path`。
+
+安装中断后，不要把半成品环境当作已验证环境；保留日志，查明失败原因后处理该环境，或指定另一个名称安装。pip 下载缓存会继续复用。
 
 `requirements.txt` 是直接依赖；`requirements.lock` 固定它们在原始已验证环境中的实际依赖闭包，共 188 个包，而非复制整个环境。`environment.yml` 只描述 conda 的 Python 与 pip 基础；完整安装应使用上述脚本。脚本正常解析依赖并执行 `pip check`，不会用 `--no-deps` 隐藏冲突。CUDA 专用包来自官方 PyTorch 源，其余包优先使用清华镜像；仅安装预编译包，避免新机器悄悄本地编译出不同产物。
 
@@ -27,9 +31,9 @@ mkdir -p .runtime
 curl --noproxy '*' -fL \
   https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh \
   -o .runtime/miniconda-installer.sh
-bash .runtime/miniconda-installer.sh -b -p "$PWD/.runtime/miniconda"
-CONDA_EXE="$PWD/.runtime/miniconda/bin/conda" \
-  bash scripts/create_env.sh --prefix "$PWD/.runtime/conda-env"
+bash .runtime/miniconda-installer.sh -b -p "$HOME/miniconda3"
+source "$HOME/miniconda3/etc/profile.d/conda.sh"
+bash scripts/create_env.sh
 ```
 
 请先确认安装脚本保存路径没有个人文件。[清华镜像使用说明](https://mirrors.tuna.tsinghua.edu.cn/help/anaconda/)列出了官方镜像路径。
@@ -50,7 +54,7 @@ python3 scripts/check_model.py /path/to/Qwen3-Omni-30B-A3B-Instruct
 
 ```bash
 tmux new -s qwen-model
-.runtime/conda-env/bin/python scripts/download_model.py \
+conda run --no-capture-output -n qwen3-omni python scripts/download_model.py \
   /path/to/Qwen3-Omni-30B-A3B-Instruct \
   --endpoint https://hf-mirror.com
 ```

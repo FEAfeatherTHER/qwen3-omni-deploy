@@ -35,15 +35,15 @@ python3 client.py --base-url http://127.0.0.1:18001/v1 \
 
    ```bash
    tmux new -s qwen-env
-   bash scripts/create_env.sh --prefix "$PWD/.runtime/conda-env"
+   bash scripts/create_env.sh
    ```
 
-   按 `Ctrl-b`，再按 `d` 可离开 tmux。安装使用清华镜像及对应 CUDA 的官方 PyTorch 包，不修改原环境或系统驱动。详细步骤及无 conda 时的安装方法见 [环境说明](docs/environment.md)。
+   默认创建名为 `qwen3-omni` 的环境，安装位置由 conda 的 `envs` 配置决定。安装后使用 `conda activate qwen3-omni`。按 `Ctrl-b`，再按 `d` 可离开 tmux。安装使用清华镜像及对应 CUDA 的官方 PyTorch 包，不修改已有环境或系统驱动。详细步骤及无 conda 时的安装方法见 [环境说明](docs/environment.md)。
 
 3. 将完整权重复制到新路径，或在 tmux 中下载：
 
    ```bash
-   .runtime/conda-env/bin/python scripts/download_model.py \
+   conda run --no-capture-output -n qwen3-omni python scripts/download_model.py \
      "$PWD/models/Qwen3-Omni-30B-A3B-Instruct" --endpoint https://hf-mirror.com
    python3 scripts/check_model.py models/Qwen3-Omni-30B-A3B-Instruct
    ```
@@ -54,7 +54,7 @@ python3 client.py --base-url http://127.0.0.1:18001/v1 \
 
    ```json
    {
-     "env_prefix": ".runtime/conda-env",
+     "env_name": "qwen3-omni",
      "model_path": "models/Qwen3-Omni-30B-A3B-Instruct",
      "gpus": "0,1,2,3"
    }
